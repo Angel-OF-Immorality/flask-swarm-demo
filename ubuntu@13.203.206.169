@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  web:
+    image: hashedname/flask-swarm-demo:v1
+    ports:
+      - "80:5000"
+    environment:
+      - APP_VERSION=1.0
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure

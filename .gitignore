@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Docker
+get-docker.sh
+
+# AWS
+*.pem
+
+# IDE
+.vscode/
+.idea/
