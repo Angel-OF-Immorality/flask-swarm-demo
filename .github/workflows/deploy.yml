@@ -31,6 +31,4 @@ jobs:
               context: .
               platforms: linux/amd64
               push: true
-              tags: |
-                ${{ env.DOCKER_IMAGE }}:latest
-                ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+              tags: hashedname/flask-swarm-demo:latest,hashedname/flask-swarm-demo:${{ github.sha }}
