@@ -43,7 +43,7 @@ jobs:
     - name: Deploy to Docker Swarm
       uses: appleboy/ssh-action@master
       with:
-        host: 13.233.253.119
+        host: 3.108.254.111
         username: ubuntu
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
