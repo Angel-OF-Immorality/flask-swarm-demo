@@ -1,34 +1,69 @@
-name: Build & Deploy to Docker Swarm
+name: Build and Deploy to Docker Swarm
 
 on:
   push:
-    branches:
-      - main
- 
+    branches: [ main ]
+
 env:
-  DOCKER-IMAGE: hashedname/flask-swarm-demo
+  DOCKER_IMAGE: hashedname/flask-swarm-demo
 
 jobs:
-  build-and-push: 
+  build-and-push:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout-code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Build and push
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        platforms: linux/amd64
+        push: true
+        tags: hashedname/flask-swarm-demo:latest,hashedname/flask-swarm-demo:${{ github.sha }}
 
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with: 
-              username: ${{ secrets.DOCKER_USERNAME }}
-              password: ${{ secrets.DOCKER_PASSWORD }}
-        
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with: 
-              context: .
-              platforms: linux/amd64
-              push: true
-              tags: hashedname/flask-swarm-demo:latest,hashedname/flask-swarm-demo:${{ github.sha }}
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Deploy to Docker Swarm
+      uses: appleboy/ssh-action@master
+      with:
+        host: 13.233.253.119
+        username: ubuntu
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cat > docker-compose.yml << 'EOF'
+          version: '3.8'
+          
+          services:
+            web:
+              image: hashedname/flask-swarm-demo:latest
+              ports:
+                - "80:5000"
+              environment:
+                - APP_VERSION=2.0
+              deploy:
+                replicas: 3
+                update_config:
+                  parallelism: 1
+                  delay: 10s
+                restart_policy:
+                  condition: on-failure
+          EOF
+          docker pull hashedname/flask-swarm-demo:latest
+          docker stack deploy -c docker-compose.yml flask-app
